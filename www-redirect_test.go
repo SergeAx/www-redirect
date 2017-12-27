@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -80,6 +81,13 @@ func TestRedirectHandler(t *testing.T) {
 	if location != wantedLocation {
 		t.Errorf("handler returned wrong location: got %v want %v",
 			location, wantedLocation)
+	}
+
+	server := recorder.HeaderMap.Get("Server")
+	wantedServer := fmt.Sprintf("%s (%s)", serverSoftware, serverVersion)
+	if server != wantedServer {
+		t.Errorf("handler returned wrong server header: got %v want %v",
+			server, wantedServer)
 	}
 
 	//TODO: test 404 and 400 statuses

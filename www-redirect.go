@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 )
+
+const serverSoftware = "www-redirect"
+const serverVersion = "1.0.0"
 
 // isDomainName checks if a string is a presentation-format domain name
 // (currently restricted to hostname-compatible "preferred name" LDH labels and
@@ -75,6 +79,7 @@ func transformDomain(name string) string {
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Server", fmt.Sprintf("%s (%s)", serverSoftware, serverVersion))
 	domain := r.Header.Get("Host")
 	response := transformDomain(domain)
 	if len(response) == 3 {
