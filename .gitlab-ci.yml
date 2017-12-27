@@ -1,0 +1,60 @@
+image: docker:latest
+
+cache:
+  key: "$CI_BUILD_REF_NAME"
+  untracked: true
+  paths:
+    - ./main
+
+services:
+  - docker:dind
+
+stages:
+  - test
+  - build
+  - containerize
+  - release
+
+variables:
+  RELEASE_REGISTRY: docker.io
+  REGISTRY_USER: sergeax
+  REGISTRY_PASSWORD: $DOCKER_IO_PASSWORD
+  CI_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  RELEASE_IMAGE: $RELEASE_REGISTRY/$REGISTRY_USER/$CI_PROJECT_NAME:latest
+
+test:
+  stage: test
+  image: golang:alpine
+  script:
+    - for i in *.go; do ! gofmt -d $i 2>&1 | read; done
+    - go test
+
+build:
+  stage: build
+  image: golang:alpine
+  script:
+    - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+  artifacts:
+    paths:
+      - main
+
+containerize:
+  stage: containerize
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build --pull -t $CI_IMAGE .
+    - docker push $CI_IMAGE
+  only:
+    - master
+  allow_failure: false
+
+release:
+  stage: release
+  script:
+    - docker pull $CI_IMAGE
+    - docker tag $CI_IMAGE $RELEASE_IMAGE
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $RELEASE_REGISTRY
+    - docker push $RELEASE_IMAGE
+  only:
+    - master
+  allow_failure: false
