@@ -33,6 +33,7 @@ build:
   stage: build
   image: golang:alpine
   script:
+    - rm -f ./main
     - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
   artifacts:
     paths:
@@ -51,6 +52,7 @@ containerize:
 release:
   stage: release
   script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker pull $CI_IMAGE
     - docker tag $CI_IMAGE $RELEASE_IMAGE
     - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $RELEASE_REGISTRY
