@@ -4,7 +4,7 @@ cache:
   key: "$CI_BUILD_REF_NAME"
   untracked: true
   paths:
-    - ./main
+    - ./www-redirect
 
 services:
   - docker:dind
@@ -33,11 +33,8 @@ build:
   stage: build
   image: golang:alpine
   script:
-    - rm -f ./main
-    - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
-  artifacts:
-    paths:
-      - main
+    - rm -f ./www-redirect
+    - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o www-redirect .
 
 containerize:
   stage: containerize
