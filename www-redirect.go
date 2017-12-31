@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -66,25 +65,24 @@ func isDomainName(s string) bool {
 	return ok
 }
 
-func transformDomain(name string) string {
+func transformDomain(name string) (string, int) {
 	name = strings.ToLower(name)
 	if !isDomainName(name) {
-		return "400"
+		return "", http.StatusBadRequest
 	}
 	if len(name) >= 4 && name[0:4] == "www." {
-		return "404"
+		return "", http.StatusNotFound
 	} else {
-		return "www." + name
+		return "www." + name, 0
 	}
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Server", fmt.Sprintf("%s (%s)", serverSoftware, serverVersion))
 	domain := r.Header.Get("Host")
-	response := transformDomain(domain)
-	if len(response) == 3 {
-		errorCode, _ := strconv.Atoi(response)
-		http.Error(w, "", errorCode)
+	response, httpError := transformDomain(domain)
+	if httpError != 0 {
+		http.Error(w, "", httpError)
 	} else {
 		http.Redirect(w, r, "http://"+response+r.URL.Path, http.StatusMovedPermanently)
 		return
