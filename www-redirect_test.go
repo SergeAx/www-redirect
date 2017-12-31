@@ -39,22 +39,24 @@ func TestIsDomainName(t *testing.T) {
 type transformDomainTest struct {
 	name   string
 	result string
+	status int
 }
 
 var transformDomainTests = []transformDomainTest{
-	{"example.com", "www.example.com"},
-	{"EXAMPLE.com", "www.example.com"},
-	{"www.example.com", "404"},
-	{"www.-example.com", "400"},
-	{"a", "www.a"},
+	{"example.com", "www.example.com", 0},
+	{"EXAMPLE.com", "www.example.com", 0},
+	{"www.example.com", "", http.StatusNotFound},
+	{"www.-example.com", "", http.StatusBadRequest},
+	{"a", "www.a", 0},
 }
 
 func TestTransformDomain(t *testing.T) {
-	for _, pair := range transformDomainTests {
-		result := transformDomain(pair.name)
-		if result != pair.result {
-			t.Errorf("transformDomain(%s) = %s; want %s", pair.name, result, pair.result)
+	for _, test := range transformDomainTests {
+		result, status := transformDomain(test.name)
+		if result == test.result && status == test.status {
+			continue
 		}
+		t.Errorf("transformDomain(%s) = (%s, %d); want (%s, %d)", test.name, result, status, test.result, test.status)
 	}
 }
 
